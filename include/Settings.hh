@@ -41,6 +41,36 @@ public:
 	inline unsigned int GetNumberOfArrayPstrips(){ return n_array_pstrip; };
 	inline unsigned int GetNumberOfArrayNstrips(){ return n_array_nstrip; };
 
+	// Array mapping
+	void ArrayMapping();
+	inline int GetArraySide( unsigned char mod, unsigned char asic ){
+		if( mod < GetNumberOfArrayModules() && asic < GetNumberOfArrayASICs() )
+			return asic_side[asic];
+		else return -1;
+	};
+	inline int GetArrayRow( unsigned char mod, unsigned char asic, unsigned char ch ){
+		if( mod < GetNumberOfArrayModules() && asic < GetNumberOfArrayASICs() && ch < GetNumberOfArrayChannels() )
+			return array_row[asic][ch];
+		else return -1;
+	};
+	inline int GetArrayStrip( unsigned char mod, unsigned char asic, unsigned char ch ){
+		if( mod < GetNumberOfArrayModules() && asic < GetNumberOfArrayASICs() && ch < GetNumberOfArrayChannels() ) {
+			if( asic_side[asic] == 0 ) return array_pid[asic][ch];
+			else if( asic_side[asic] == 1 ) return array_nid[asic][ch];
+		}
+		return -1;
+	};
+	std::vector<int> GetArrayDAQInfo( unsigned char mod, unsigned char row, unsigned char side, unsigned char strip );
+	inline int GetArrayModule( unsigned char mod, unsigned char row, unsigned char side, unsigned char strip ){
+		return GetArrayDAQInfo( mod, row, side, strip ).at(0);
+	};
+	inline int GetArrayAsic( unsigned char mod, unsigned char row, unsigned char side, unsigned char strip ){
+		return GetArrayDAQInfo( mod, row, side, strip ).at(1);
+	};
+	inline int GetArrayChannel( unsigned char mod, unsigned char row, unsigned char side, unsigned char strip ){
+		return GetArrayDAQInfo( mod, row, side, strip ).at(2);
+	};
+
 
 	// CAEN settings
 	inline unsigned char GetNumberOfCAENModules(){ return n_caen_mod; };
@@ -155,6 +185,13 @@ public:
 	inline bool GetClippedRejection(){ return clipped_reject; };
 	inline bool GetOverflowRejection(){ return overflow_reject; };
 
+	// Array Calibrator controls
+	inline double GetRelativeCalibratorAllowance(){ return relcal_allowance; };
+	inline double GetRelativeCalibratorSmallOffset(){ return relcal_offset_small; };
+	inline double GetRelativeCalibratorLargeOffset(){ return relcal_offset_large; };
+	inline double GetRelativeCalibratorRobustFraction(){ return relcal_robust_fraction; };
+
+
 	// Recoil detector
 	inline unsigned char GetNumberOfRecoilSectors(){ return n_recoil_sector; };
 	inline unsigned char GetNumberOfRecoilLayers(){ return n_recoil_layer; };
@@ -260,6 +297,13 @@ private:
 	unsigned char n_array_asic;	///< 4 p-side + 2 n-side per module
 	unsigned char n_array_ch;	///< 128 channels per ASIC
 
+	// Array mapping
+	std::vector<unsigned char> asic_side;				///< Vector containing 0 for p-side and 1 for n-side where the index is the asic number
+	std::vector<unsigned char> asic_row;				///< Vector containing the smallest row number for a given p/n-side asic where the index is the asic number
+	std::vector<std::vector<unsigned char>> array_row;	///< Gives the row of the array for each channel (accessed via asic number and channel number on strip). Unused channels have their value as 0
+	std::vector<std::vector<int>> array_pid;			///< Gives each p-side strip on the array a unique number for identification (accessed via asic number and channel number on strip)
+	std::vector<std::vector<int>> array_nid;			///< Gives each n-side strip on the array a number for identification (accessed via asic number and channel number on strip)
+
 	// Array geometry
 	unsigned char n_array_row;		///< 4x2 DSSSDs per module, but paired; dE-E for recoil, gas cathodes (13?)
 	unsigned char n_array_pstrip;	///< number of p-side strips in each DSSSD
@@ -339,6 +383,13 @@ private:
 	bool overflow_reject;	///< reject events if their energy is in the overflow
 
 
+	// Relative calibrator control options
+	double relcal_allowance;					///< Fraction of the slope of maximum bin ->slope varied by this amount; default is 0.1 or 10%
+	double relcal_offset_small;					///< Offset for cut with varied slope to select data to include in the fit; default is 50 keV
+	double relcal_offset_large;					///< Offset for cut with fixed slope; default is 150 keV
+	double relcal_robust_fraction;				///< Fraction used in the Robust fitting, data has to fit at least amount of data points; default is 0.7 or 70%
+
+
 	// Recoil detectors
 	unsigned char n_recoil_sector;								///< Number of recoil detector sectors or quadrants; 1 for gas and 4 for Si
 	unsigned char n_recoil_layer;								///< Number of recoil detector layers; 13 for gas and 2 for Si
@@ -416,7 +467,7 @@ private:
 	std::vector<std::vector<std::vector<char>>> cd_side;			///< A channel map for the CD sides (rings = 0, sectors = 1) (-1 if not a CD)
 
 
-	ClassDef( ISSSettings, 10 )
+	ClassDef( ISSSettings, 11 )
 
 };
 

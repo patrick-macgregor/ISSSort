@@ -20,19 +20,12 @@ else
 	DICTEXT   := _rdict.pcm
 endif
 
-# Note: SONAMESWITCH would be used as $(SONAMESWITCH)$@ in the rule
-# for building $(LIB_DIR)/libiss_sort.so .  However, that causes the
-# dynamic linker to not search for the library but just use the name
-# as a path when it contains a /.  That means that iss_sort cannot be
-# called from another directory.
 PLATFORM:=$(shell uname)
 ifeq ($(PLATFORM),Darwin)
 SHAREDSWITCH = -Qunused-arguments -shared -undefined dynamic_lookup -dynamiclib
-SONAMESWITCH = -Wl,-install_name,'@executable_path/../lib/'# NO ENDING SPACE
 OSDEF = -DMACOSX
 else
 SHAREDSWITCH = -shared
-SONAMESWITCH = -Wl,-soname,# NO ENDING SPACE
 OSDEF = -DLINUX
 LIBEXTRA = -lrt
 endif
@@ -44,7 +37,7 @@ DOC_HTML	:= documentation.html
 
 ROOTCPPFLAGS	:= $(shell root-config --cflags)
 ROOTLDFLAGS		:= $(shell root-config --ldflags)
-ROOTLIBS		:= $(shell root-config --glibs) -lRHTTP -lThread -lMathMore
+ROOTLIBS		:= $(shell root-config --glibs) -lRHTTP -lThread -lMathMore -lMinuit
 LIBS			:= $(ROOTLIBS) $(LIBEXTRA)
 
 # Compiler.
@@ -78,6 +71,7 @@ OBJECTS =  		$(SRC_DIR)/AutoCalibrator.o \
 				$(SRC_DIR)/ISSEvts.o \
 				$(SRC_DIR)/ISSGUI.o \
 				$(SRC_DIR)/Reaction.o \
+				$(SRC_DIR)/RelativeCalibrator.o \
 				$(SRC_DIR)/Settings.o \
 				$(SRC_DIR)/TIssData.o
 
@@ -94,6 +88,7 @@ DEPENDENCIES =  $(INC_DIR)/AutoCalibrator.hh \
 				$(INC_DIR)/ISSEvts.hh \
 				$(INC_DIR)/ISSGUI.hh \
 				$(INC_DIR)/Reaction.hh \
+				$(INC_DIR)/RelativeCalibrator.hh \
 				$(INC_DIR)/Settings.hh \
 				$(INC_DIR)/TIssData.hh
 
